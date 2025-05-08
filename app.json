@@ -4,7 +4,7 @@
     "plugins": [
       "expo-router"
     ],
-    "name": "jobs_finder",
+    "name": "Job Finder",
     "slug": "jobs_finder"
   }
 }
