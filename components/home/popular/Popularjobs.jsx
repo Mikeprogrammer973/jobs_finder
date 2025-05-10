@@ -17,15 +17,12 @@ const Popularjobs = () => {
 
   const { data, isLoading, error } = useFetch("search",
     {
-      query: 'developer jobs in chicago',
+      query: 'python developer',
       page: '1',
       num_pages: '1',
-      country: 'us',
       date_posted: 'all'
     } 
   )
-
-  console.log(data)
 
   return (
     <View style={styles.container}>
@@ -44,12 +41,12 @@ const Popularjobs = () => {
           (error ? (<Text>Something went wrong: {error}</Text>) : 
             (
               <FlatList
-                data={['data1', 'data2', 'data3', 'data4']}
+                data={data}
                 renderItem={({ item }) => (
                   <PopuplarJobCard
                     item={item}
                     selectedJob={item}
-                    handleCardPress={() => router.push(`/details/${item.id}`)}
+                    handleCardPress={() => router.push(`/job-details/${item?.job_id}`)}
                   />
                 )}
                 keyExtractor={(item) => item?.job_id}
