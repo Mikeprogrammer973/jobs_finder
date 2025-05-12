@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 export const scrapeRemotive = async (query: string) => {
-  const { data } = await axios.get('https://remotive.io/api/remote-jobs');
+  const { data } = await axios.get('https://remotive.com/api/remote-jobs');
   return data.jobs
     .filter((job: any) => job.title.toLowerCase().includes(query.toLowerCase()))
     .map((job: any) => ({

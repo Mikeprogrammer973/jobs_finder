@@ -1,12 +1,10 @@
 import { scrapeLinkedIn } from '../scrapers/linkedin';
-import { scrapeIndeed } from '../scrapers/indeed';
 import { scrapeRemoteOK } from '../scrapers/remoteok';
 import { scrapeRemotive } from '../scrapers/remotive';
 import { scrapeWWR } from '../scrapers/weworkremotely';
 import { getCache, setCache } from '../utils/cache';
 import { scrapeGlassdoor } from '../scrapers/glassdoor';
 import { scrapeSimplyHired } from '../scrapers/simplyhired';
-import { persistJobs } from '../utils/persistJobs';
 
 export const searchJobs = async (req: any, res: any) => {
   const {
@@ -18,23 +16,20 @@ export const searchJobs = async (req: any, res: any) => {
     source
   } = req.query;
 
-  const key = `jobs:${query}:${location}:${page}:${remote}:${type}:${source}`;
-  const cached = await getCache(key);
-  if (cached) return res.json({ cached: true, data: cached });
+  // const key = `jobs:${query}:${location}:${page}:${remote}:${type}:${source}`;
+  // const cached = await getCache(key);
+  // if (cached) return res.json({ cached: true, data: cached });
 
   const scrapers = [
-    // scrapeLinkedIn(query, page),
-    // scrapeIndeed(query, location, page),
-    // scrapeRemoteOK(query),
-    // scrapeRemotive(query),
+    scrapeLinkedIn(query, 10),
+    scrapeRemoteOK(query),
+    scrapeRemotive(query),
     scrapeWWR(query),
-    // scrapeGlassdoor(query),
-    // scrapeSimplyHired(query),
+    scrapeGlassdoor(query),
+    scrapeSimplyHired(query),
   ];
 
   const results = (await Promise.allSettled(scrapers)).flatMap((r: any) => (r.status === 'fulfilled' ? r.value : []));
-  
-//   await persistJobs(results);
   
   const filtered = results.filter((job: any) => {
     if (remote && job.type?.toLowerCase() !== 'remote') return false;
@@ -43,6 +38,6 @@ export const searchJobs = async (req: any, res: any) => {
     return true;
   });
 
-  await setCache(key, filtered, 3600);
+  // await setCache(key, filtered, 3600);
   res.json({ cached: false, count: filtered.length, data: filtered });
 };

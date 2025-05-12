@@ -4,27 +4,199 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeGlassdoor = void 0;
-const puppeteer_1 = __importDefault(require("puppeteer"));
-const scrapeGlassdoor = async (query, location = '', page = 1) => {
-    const browser = await puppeteer_1.default.launch({ headless: true });
-    const pageObj = await browser.newPage();
-    const start = (page - 1) * 10;
-    const url = `https://www.glassdoor.com/Job/jobs.htm?sc.keyword=${encodeURIComponent(query)}&locT=C&locId=&jobType=&fromAge=-1&minSalary=0&includeNoSalaryJobs=true&radius=0&cityId=&minRating=0.0&industryId=-1&sgocId=-1&empType=all&applicationType=0&remoteWorkType=0&p=${page}`;
-    await pageObj.goto(url, { waitUntil: 'domcontentloaded' });
-    const jobs = await pageObj.evaluate(() => {
-        const cards = Array.from(document.querySelectorAll('.react-job-listing'));
-        return cards.map((el) => ({
-            title: el.querySelector('.jobLink span')?.textContent,
-            company: el.querySelector('.jobEmpolyerName')?.textContent,
-            location: el.querySelector('.jobLocation')?.textContent,
-            salary: el.querySelector('.salary-estimate')?.textContent,
-            link: 'https://www.glassdoor.com' + el.getAttribute('href'),
-            source: 'Glassdoor',
-            date: el.querySelector('.jobDate')?.textContent,
-            description: el.querySelector('.jobDescriptionContent')?.textContent
-        }));
+const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
+const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
+const promises_1 = require("timers/promises");
+const scrapeGlassdoor = async (query, location = '', page = 1, maxJobs = 10, headless = false // Mantenha false para debug
+) => {
+    // Configuração avançada para evitar detecção
+    puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
+    const browser = await puppeteer_extra_1.default.launch({
+        headless,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--window-size=1920,1080',
+            '--disable-dev-shm-usage',
+            '--disable-blink-features=AutomationControlled',
+            `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`
+        ]
     });
-    await browser.close();
-    return jobs;
+    const pageObj = await browser.newPage();
+    try {
+        // Configurações browser
+        await pageObj.setViewport({ width: 1920, height: 1080 });
+        await pageObj.setJavaScriptEnabled(true);
+        // Interceptação de requests para melhor performance
+        await pageObj.setRequestInterception(true);
+        pageObj.on('request', (req) => {
+            if (['image', 'stylesheet', 'font', 'media'].includes(req.resourceType())) {
+                req.abort();
+            }
+            else {
+                req.continue();
+            }
+        });
+        // Construção da URL com parâmetros
+        const url = buildGlassdoorUrl(query, location, page);
+        console.log(`Acessando: ${url}`);
+        // Navegação com timeout aumentado
+        await pageObj.goto(url, {
+            waitUntil: 'networkidle2',
+            timeout: 90000
+        });
+        // Verificação de bloqueios
+        await checkForBlocks(pageObj);
+        // Espera dinâmica pelos resultados
+        await waitForJobListings(pageObj);
+        // Extração dos dados
+        const jobs = await extractJobData(pageObj, maxJobs);
+        // Visita páginas individuais para mais detalhes
+        await enrichJobDetails(browser, jobs);
+        return jobs;
+    }
+    catch (error) {
+        console.error('Erro durante scraping:', error);
+        await saveDebugFiles(pageObj);
+        return [];
+    }
+    finally {
+        await browser.close();
+    }
 };
 exports.scrapeGlassdoor = scrapeGlassdoor;
+function buildGlassdoorUrl(query, location, page) {
+    const baseUrl = 'https://www.glassdoor.com/Job/jobs.htm';
+    const params = new URLSearchParams({
+        'sc.keyword': query,
+        p: page.toString(),
+        fromAge: '-1',
+        minSalary: '0',
+        includeNoSalaryJobs: 'true',
+        radius: '100',
+        minRating: '0.0',
+        industryId: '-1',
+        sgocId: '-1',
+        empType: 'all',
+        applicationType: '0',
+        remoteWorkType: '0'
+    });
+    if (location) {
+        params.set('locT', 'N');
+        params.set('locId', '1');
+        params.set('typedKeyword', location);
+    }
+    return `${baseUrl}?${params.toString()}`;
+}
+async function checkForBlocks(page) {
+    try {
+        // Verifica se há CAPTCHA
+        if (await page.$('#captchaChallenge') !== null) {
+            throw new Error('CAPTCHA detectado - requer intervenção manual');
+        }
+        // Verifica se há wall de login
+        if (await page.$('#InlineLoginModule') !== null) {
+            throw new Error('Glassdoor requer login para visualizar vagas');
+        }
+        // Verifica se há mensagem de bloqueio
+        const blockMsg = await page.$eval('body', el => el.textContent?.includes('Access Denied') ? 'Access Denied' : null);
+        if (blockMsg) {
+            throw new Error(`Bloqueio detectado: ${blockMsg}`);
+        }
+    }
+    catch (error) {
+        console.log('Erro na verificação de bloqueios:', error);
+        throw error;
+    }
+}
+async function waitForJobListings(page) {
+    const selectorsToTry = [
+        '[data-test="jobListing"]',
+        '.react-job-listing',
+        '.jobListing',
+        '.jlGrid',
+        '[id^="JobListing_"]'
+    ];
+    for (const selector of selectorsToTry) {
+        try {
+            await page.waitForSelector(selector, { timeout: 20000 });
+            return;
+        }
+        catch (e) {
+            console.log(`Seletor ${selector} não encontrado, tentando próximo...`);
+        }
+    }
+    throw new Error('Não foi possível encontrar listagens de vagas');
+}
+async function extractJobData(page, maxJobs) {
+    return page.evaluate((max) => {
+        const jobElements = Array.from(document.querySelectorAll('[data-test="jobListing"], .react-job-listing, .jl')).slice(0, max);
+        return jobElements.map((el) => {
+            const titleEl = el.querySelector('[data-test="job-title"], .JobCard_jobTitle__GLyJ1');
+            const companyEl = el.querySelector('[data-test="employer-name"], .EmployerProfile_compactEmployerName__9MGcV');
+            const locationEl = el.querySelector('[data-test="emp-location"], .JobCard_location__Ds1fM');
+            const salaryEl = el.querySelector('[data-test="detailSalary"], .JobCard_salaryEstimate__QpbTW');
+            const dateEl = el.querySelector('[data-test="job-age"], .jobDate');
+            const ratingEl = el.querySelector('[data-test="rating"], .rating-single-star_RatingText__XENmU');
+            const logoEl = el.querySelector('.avatar-base_Image__2RcF9');
+            return {
+                title: titleEl?.textContent?.trim() || '',
+                company: companyEl?.textContent?.trim() || '',
+                location: locationEl?.textContent?.trim() || '',
+                salary: salaryEl?.textContent?.trim(),
+                link: titleEl?.getAttribute('href')
+                    ? 'https://www.glassdoor.com' + titleEl.getAttribute('href')
+                    : '',
+                source: 'Glassdoor',
+                date: dateEl?.textContent?.trim(),
+                rating: ratingEl?.textContent?.trim(),
+                logo: logoEl?.getAttribute('src')
+            };
+        });
+    }, maxJobs);
+}
+async function enrichJobDetails(browser, jobs) {
+    for (const job of jobs) {
+        if (!job.link || !job.link.includes('glassdoor.com'))
+            continue;
+        try {
+            const jobPage = await browser.newPage();
+            await jobPage.setViewport({ width: 1920, height: 1080 });
+            // Navegação com timeout
+            await jobPage.goto(job.link, {
+                waitUntil: 'domcontentloaded',
+                timeout: 30000
+            });
+            // Extrai detalhes adicionais
+            const details = await jobPage.evaluate(() => {
+                const descEl = document.querySelector('.JobDetails_jobDescription__uW_fK .JobDetails_showHidden__C_FOA');
+                const typeEl = Array.from(document.querySelectorAll('.jobInfoItem'))
+                    .find(el => el.textContent?.includes('Employment Type'));
+                return {
+                    description: descEl?.textContent?.trim(),
+                    jobType: typeEl?.querySelector('.value')?.textContent?.trim()
+                };
+            });
+            job.description = details.description;
+            job.jobType = details.jobType;
+            // Delay aleatório
+            await (0, promises_1.setTimeout)(2000 + Math.random() * 3000);
+            await jobPage.close();
+        }
+        catch (error) {
+            console.log(`Erro ao obter detalhes para ${job.link}:`, error);
+        }
+    }
+}
+async function saveDebugFiles(page) {
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    try {
+        await page.screenshot({ path: `glassdoor_error_${timestamp}.png`, fullPage: true });
+        const html = await page.content();
+        require('fs').writeFileSync(`glassdoor_page_${timestamp}.html`, html);
+        console.log(`Arquivos de debug salvos: glassdoor_error_${timestamp}.png/html`);
+    }
+    catch (e) {
+        console.error('Erro ao salvar arquivos de debug:', e);
+    }
+}

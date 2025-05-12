@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeRemotive = void 0;
 const axios_1 = __importDefault(require("axios"));
 const scrapeRemotive = async (query) => {
-    const { data } = await axios_1.default.get('https://remotive.io/api/remote-jobs');
+    const { data } = await axios_1.default.get('https://remotive.com/api/remote-jobs');
     return data.jobs
         .filter((job) => job.title.toLowerCase().includes(query.toLowerCase()))
         .map((job) => ({
