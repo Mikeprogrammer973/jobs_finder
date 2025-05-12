@@ -59,7 +59,7 @@ export const searchJobs = async (req: Request, res: Response) => {
   // Processar cada scraper individualmente
   for (const { name, fn } of scrapers) {
     try {
-      sendEvent({ status: 'progress', message: `Iniciando busca no ${name}...` });
+      // sendEvent({ status: 'progress', message: `Iniciando busca no ${name}...` });
       
       const startTime = Date.now();
       const results = await fn();
