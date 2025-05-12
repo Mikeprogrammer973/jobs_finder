@@ -56,9 +56,13 @@ const scrapeLinkedIn = async (query, maxJobs = 10, page = 1, headless = true) =>
                         description: extractText('.job-search-card__description'),
                         salary: extractText('.job-search-card__salary-info'),
                         benefits: extractText('.job-search-card__benefits'),
-                        logo: el.querySelector('img.artdeco-entity-image')?.src || ''
+                        logo: el.querySelector('img.artdeco-entity-image, .ivm-view-attr__img--centered')?.src || ''
                     };
                 }, el);
+                jobs.push({
+                    ...jobInfo,
+                    source: 'LinkedIn'
+                });
                 // Visita a página individual da vaga para mais detalhes
                 if (jobInfo.link) {
                     const newPage = await browser.newPage();
@@ -75,8 +79,6 @@ const scrapeLinkedIn = async (query, maxJobs = 10, page = 1, headless = true) =>
                             const jobTypeElement = Array.from(document.querySelectorAll('.description__job-criteria-list li'))
                                 .find(li => li.querySelector('h3')?.textContent?.trim() === 'Employment type');
                             const jobType = jobTypeElement?.querySelector('span')?.textContent?.trim();
-                            // Extrai logo da empresa
-                            const logo = document.querySelector('.top-card-layout__card img')?.src || '';
                             // Extrai outras qualificações
                             const qualifications = Array.from(document.querySelectorAll('.description__job-criteria-list li'))
                                 .map(li => {
@@ -85,14 +87,13 @@ const scrapeLinkedIn = async (query, maxJobs = 10, page = 1, headless = true) =>
                                 return `${label}: ${value}`;
                             })
                                 .join(' | ');
-                            return { description, jobType, logo, qualifications };
+                            return { description, jobType, qualifications };
                         });
                         jobs.push({
                             ...jobInfo,
                             description: jobDetails.description || jobInfo.description,
                             jobType: jobDetails.jobType,
                             qualifications: jobDetails.qualifications,
-                            logo: jobDetails.logo || jobInfo.logo,
                             source: 'LinkedIn'
                         });
                         if (jobs.length >= maxJobs) {

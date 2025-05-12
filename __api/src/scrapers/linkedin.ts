@@ -83,9 +83,14 @@ export const scrapeLinkedIn = async (
             description: extractText('.job-search-card__description'),
             salary: extractText('.job-search-card__salary-info'),
             benefits: extractText('.job-search-card__benefits'),
-            logo: el.querySelector<HTMLImageElement>('img.artdeco-entity-image')?.src || ''
+            logo: el.querySelector<HTMLImageElement>('img.artdeco-entity-image, .ivm-view-attr__img--centered')?.src || ''
           };
         }, el);
+
+        jobs.push({
+          ...jobInfo,
+          source: 'LinkedIn'
+        });
 
         // Visita a página individual da vaga para mais detalhes
         if (jobInfo.link) {
@@ -107,9 +112,6 @@ export const scrapeLinkedIn = async (
                 .find(li => li.querySelector('h3')?.textContent?.trim() === 'Employment type');
               const jobType = jobTypeElement?.querySelector('span')?.textContent?.trim();
               
-              // Extrai logo da empresa
-              const logo = document.querySelector<HTMLImageElement>('.top-card-layout__card img')?.src || '';
-              
               // Extrai outras qualificações
               const qualifications = Array.from(document.querySelectorAll('.description__job-criteria-list li'))
                 .map(li => {
@@ -119,7 +121,7 @@ export const scrapeLinkedIn = async (
                 })
                 .join(' | ');
 
-              return { description, jobType, logo, qualifications };
+              return { description, jobType, qualifications };
             });
 
             jobs.push({
@@ -127,7 +129,6 @@ export const scrapeLinkedIn = async (
               description: jobDetails.description || jobInfo.description,
               jobType: jobDetails.jobType,
               qualifications: jobDetails.qualifications,
-              logo: jobDetails.logo || jobInfo.logo,
               source: 'LinkedIn'
             });
 

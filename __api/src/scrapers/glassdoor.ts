@@ -74,9 +74,6 @@ export const scrapeGlassdoor = async (
     // Extração dos dados
     const jobs = await extractJobData(pageObj, maxJobs);
 
-    // Visita páginas individuais para mais detalhes
-    await enrichJobDetails(browser, jobs);
-
     return jobs;
   } catch (error) {
     console.error('Erro durante scraping:', error);
@@ -189,44 +186,6 @@ async function extractJobData(page: Page, maxJobs: number): Promise<GlassdoorJob
       } as GlassdoorJob;
     });
   }, maxJobs);
-}
-
-async function enrichJobDetails(browser: Browser, jobs: GlassdoorJob[]): Promise<void> {
-  for (const job of jobs) {
-    if (!job.link || !job.link.includes('glassdoor.com')) continue;
-
-    try {
-      const jobPage = await browser.newPage();
-      await jobPage.setViewport({ width: 1920, height: 1080 });
-      
-      // Navegação com timeout
-      await jobPage.goto(job.link, {
-        waitUntil: 'domcontentloaded',
-        timeout: 30000
-      });
-
-      // Extrai detalhes adicionais
-      const details = await jobPage.evaluate(() => {
-        const descEl = document.querySelector('.JobDetails_jobDescription__uW_fK .JobDetails_showHidden__C_FOA');
-        const typeEl = Array.from(document.querySelectorAll('.jobInfoItem'))
-          .find(el => el.textContent?.includes('Employment Type'));
-        
-        return {
-          description: descEl?.textContent?.trim(),
-          jobType: typeEl?.querySelector('.value')?.textContent?.trim()
-        };
-      });
-
-      job.description = details.description;
-      job.jobType = details.jobType;
-
-      // Delay aleatório
-      await setTimeout(2000 + Math.random() * 3000);
-      await jobPage.close();
-    } catch (error) {
-      console.log(`Erro ao obter detalhes para ${job.link}:`, error);
-    }
-  }
 }
 
 async function saveDebugFiles(page: Page): Promise<void> {

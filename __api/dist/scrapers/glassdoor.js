@@ -6,7 +6,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeGlassdoor = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
-const promises_1 = require("timers/promises");
 const scrapeGlassdoor = async (query, location = '', page = 1, maxJobs = 10, headless = false // Mantenha false para debug
 ) => {
     // Configuração avançada para evitar detecção
@@ -51,8 +50,6 @@ const scrapeGlassdoor = async (query, location = '', page = 1, maxJobs = 10, hea
         await waitForJobListings(pageObj);
         // Extração dos dados
         const jobs = await extractJobData(pageObj, maxJobs);
-        // Visita páginas individuais para mais detalhes
-        await enrichJobDetails(browser, jobs);
         return jobs;
     }
     catch (error) {
@@ -154,39 +151,6 @@ async function extractJobData(page, maxJobs) {
             };
         });
     }, maxJobs);
-}
-async function enrichJobDetails(browser, jobs) {
-    for (const job of jobs) {
-        if (!job.link || !job.link.includes('glassdoor.com'))
-            continue;
-        try {
-            const jobPage = await browser.newPage();
-            await jobPage.setViewport({ width: 1920, height: 1080 });
-            // Navegação com timeout
-            await jobPage.goto(job.link, {
-                waitUntil: 'domcontentloaded',
-                timeout: 30000
-            });
-            // Extrai detalhes adicionais
-            const details = await jobPage.evaluate(() => {
-                const descEl = document.querySelector('.JobDetails_jobDescription__uW_fK .JobDetails_showHidden__C_FOA');
-                const typeEl = Array.from(document.querySelectorAll('.jobInfoItem'))
-                    .find(el => el.textContent?.includes('Employment Type'));
-                return {
-                    description: descEl?.textContent?.trim(),
-                    jobType: typeEl?.querySelector('.value')?.textContent?.trim()
-                };
-            });
-            job.description = details.description;
-            job.jobType = details.jobType;
-            // Delay aleatório
-            await (0, promises_1.setTimeout)(2000 + Math.random() * 3000);
-            await jobPage.close();
-        }
-        catch (error) {
-            console.log(`Erro ao obter detalhes para ${job.link}:`, error);
-        }
-    }
 }
 async function saveDebugFiles(page) {
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
