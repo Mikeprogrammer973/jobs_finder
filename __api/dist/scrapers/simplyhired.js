@@ -7,7 +7,7 @@ exports.scrapeSimplyHired = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
 const promises_1 = require("timers/promises");
-const scrapeSimplyHired = async (query, location = '', page = 1, headless = true) => {
+const scrapeSimplyHired = async (query, location = '', headless = true) => {
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
     const browser = await puppeteer_extra_1.default.launch({
         headless,
@@ -16,7 +16,7 @@ const scrapeSimplyHired = async (query, location = '', page = 1, headless = true
             '--disable-setuid-sandbox',
             '--window-size=1920,1080',
             '--disable-dev-shm-usage',
-            `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`
+            `--user-agent=Mozilla/5.0`
         ]
     });
     const pageObj = await browser.newPage();
@@ -34,7 +34,7 @@ const scrapeSimplyHired = async (query, location = '', page = 1, headless = true
                 req.continue();
             }
         });
-        const url = `https://www.simplyhired.com/search?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}&pn=${page}`;
+        const url = `https://www.simplyhired.com/search?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`;
         console.log(`Navigating to: ${url}`);
         await pageObj.goto(url, {
             waitUntil: 'networkidle2',
@@ -48,7 +48,7 @@ const scrapeSimplyHired = async (query, location = '', page = 1, headless = true
         if (isBlocked) {
             throw new Error('SimplyHired has blocked the request');
         }
-        const selectorsToTry = ['.css-obg9ou', '[data-testid="searchSerpJob"]', '.SerpJob-jobCard', '.job-card', '.card-job'];
+        const selectorsToTry = ['.css-obg9ou', '[data-testid="searchSerpJob"]', '[role="presentation"]', '.SerpJob-jobCard', '.job-card', '.card-job'];
         let jobs = [];
         for (const selector of selectorsToTry) {
             try {

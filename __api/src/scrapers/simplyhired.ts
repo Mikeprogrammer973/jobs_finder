@@ -22,7 +22,6 @@ interface SimplyHiredJob {
 export const scrapeSimplyHired = async (
   query: string,
   location: string = '',
-  page: number = 1,
   headless: boolean = true
 ): Promise<SimplyHiredJob[]> => {
   puppeteer.use(StealthPlugin());
@@ -34,7 +33,7 @@ export const scrapeSimplyHired = async (
       '--disable-setuid-sandbox',
       '--window-size=1920,1080',
       '--disable-dev-shm-usage',
-      `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`
+      `--user-agent=Mozilla/5.0`
     ]
   });
 
@@ -55,7 +54,7 @@ export const scrapeSimplyHired = async (
       }
     });
 
-    const url = `https://www.simplyhired.com/search?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}&pn=${page}`;
+    const url = `https://www.simplyhired.com/search?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`;
     console.log(`Navigating to: ${url}`);
     
     await pageObj.goto(url, {
@@ -73,7 +72,7 @@ export const scrapeSimplyHired = async (
       throw new Error('SimplyHired has blocked the request');
     }
 
-    const selectorsToTry = ['.css-obg9ou', '[data-testid="searchSerpJob"]', '.SerpJob-jobCard', '.job-card', '.card-job'];
+    const selectorsToTry = ['.css-obg9ou', '[data-testid="searchSerpJob"]', '[role="presentation"]', '.SerpJob-jobCard', '.job-card', '.card-job'];
     let jobs: SimplyHiredJob[] = [];
     
     for (const selector of selectorsToTry) {

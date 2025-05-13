@@ -1,5 +1,5 @@
 import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';;
 
 interface LinkedInJob {
   title: string;
@@ -19,7 +19,6 @@ interface LinkedInJob {
 
 export const scrapeLinkedIn = async (
   query: string,
-  page: number = 1,
   headless: boolean = true
 ): Promise<LinkedInJob[]> => {
   // Configuração do Puppeteer com Stealth
@@ -42,8 +41,7 @@ export const scrapeLinkedIn = async (
     await pageObj.setJavaScriptEnabled(true);
 
     // Navegação para a página de vagas
-    const start = (page - 1) * 25;
-    const url = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(query)}&start=${start}`;
+    const url = `https://www.linkedin.com/jobs/search?keywords=${encodeURIComponent(query)}`;
     
     console.log(`Acessando: ${url}`);
     await pageObj.goto(url, {
@@ -82,7 +80,7 @@ export const scrapeLinkedIn = async (
             description: extractText('.job-search-card__description'),
             salary: extractText('.job-search-card__salary-info'),
             benefits: extractText('.job-search-card__benefits'),
-            logo: el.querySelector<HTMLImageElement>('img.artdeco-entity-image, .ivm-view-attr__img--centered')?.src || ''
+            logo: el.getElementsByTagName('img')[0].getAttribute('src') || ''
           };
         }, el);
 
@@ -90,66 +88,6 @@ export const scrapeLinkedIn = async (
           ...jobInfo,
           source: 'LinkedIn'
         });
-
-        // Visita a página individual da vaga para mais detalhes
-        if (jobInfo.link) {
-          const newPage = await browser.newPage();
-          await newPage.setViewport({ width: 1920, height: 1080 });
-          
-          try {
-            await newPage.goto(jobInfo.link, {
-              waitUntil: 'domcontentloaded',
-              timeout: 30000
-            });
-
-            // Extrai detalhes adicionais
-            const jobDetails = await newPage.evaluate(() => {
-              const description = document.querySelector('.description__text')?.textContent?.trim() || '';
-              
-              // Extrai tipo de vaga
-              const jobTypeElement = Array.from(document.querySelectorAll('.description__job-criteria-list li'))
-                .find(li => li.querySelector('h3')?.textContent?.trim() === 'Employment type');
-              const jobType = jobTypeElement?.querySelector('span')?.textContent?.trim();
-              
-              // Extrai outras qualificações
-              const qualifications = Array.from(document.querySelectorAll('.description__job-criteria-list li'))
-                .map(li => {
-                  const label = li.querySelector('h3')?.textContent?.trim();
-                  const value = li.querySelector('span')?.textContent?.trim();
-                  return `${label}: ${value}`;
-                })
-                .join(' | ');
-
-              return { description, jobType, qualifications };
-            });
-
-            jobs.push({
-              ...jobInfo,
-              description: jobDetails.description || jobInfo.description,
-              jobType: jobDetails.jobType,
-              qualifications: jobDetails.qualifications,
-              source: 'LinkedIn'
-            });
-
-            // Delay aleatório 
-            await new Promise(resolve => 
-              setTimeout(resolve, 2000 + Math.random() * 3000));
-          } catch (error) {
-            console.log(`Erro ao acessar vaga ${index + 1}:`, error);
-            // Adiciona mesmo sem os detalhes completos
-            jobs.push({
-              ...jobInfo,
-              source: 'LinkedIn'
-            });
-          } finally {
-            await newPage.close();
-          }
-        } else {
-          jobs.push({
-            ...jobInfo,
-            source: 'LinkedIn'
-          });
-        }
       } catch (error) {
         console.log(`Erro ao processar vaga ${index + 1}:`, error);
       }

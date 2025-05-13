@@ -46,13 +46,13 @@ export const searchJobs = async (req: Request, res: Response) => {
 
   // Lista de scrapers com identificadores
   const scrapers = [
-    // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
-    // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
-    // { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
-    // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-    // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-    // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString(), 10) },
-    { name: 'Dice', fn: () => scrapeDice(query.toString()) }
+    { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
+    { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
+    { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
+    { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
+    // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, FIX BUG
+    { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
+    { name: 'Dice', fn: () => scrapeDice(query.toString()) } 
   ];
 
   // Objeto para armazenar resultados

@@ -66,40 +66,40 @@ export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
     });
 
     // Visit individual job pages for more details
-        if (jobs.length > 0) {
-          for (const job of jobs) {
-            try {
-              const jobPage = await browser.newPage();
-              await jobPage.goto(job.link, { waitUntil: 'domcontentloaded', timeout: 30000 });
-              
-              const jobDetails = await jobPage.evaluate(() => {
-                const typeEl = document.querySelector('.lis-container');
-                
-                const job_info = typeEl?.querySelector('.lis-container__job__sidebar__job-about__list')?.querySelectorAll('.lis-container__job__sidebar__job-about__list__item') || []
+    if (jobs.length > 0) {
+      for (const job of jobs) {
+        try {
+          const jobPage = await browser.newPage();
+          await jobPage.goto(job.link, { waitUntil: 'domcontentloaded', timeout: 30000 });
+          
+          const jobDetails = await jobPage.evaluate(() => {
+            const typeEl = document.querySelector('.lis-container');
+            
+            const job_info = typeEl?.querySelector('.lis-container__job__sidebar__job-about__list')?.querySelectorAll('.lis-container__job__sidebar__job-about__list__item') || []
 
-                return {
-                  jobType: typeEl?.querySelector('box--jobType')?.textContent?.trim(),
-                  date: job_info[0]?.textContent?.trim(),
-                  apply_before: job_info[1]?.textContent?.trim(),
-                  category: job_info[3]?.textContent?.trim(),
-                  location: job_info[4]?.textContent?.trim(),
-                  fullDescription: document.querySelector('.lis-container__job__content__description')?.textContent?.trim()
-                };
-              });
-    
-              job.jobType = jobDetails.jobType;
-              job.description = jobDetails.fullDescription || job.description;
-              job.date = jobDetails.date;
-              job.apply_before = jobDetails.apply_before;
-              job.category = jobDetails.category;
-              job.location = jobDetails.location as string;
+            return {
+              jobType: typeEl?.querySelector('box--jobType')?.textContent?.trim(),
+              date: job_info[0]?.textContent?.trim(),
+              apply_before: job_info[1]?.textContent?.trim(),
+              category: job_info[3]?.textContent?.trim(),
+              location: job_info[4]?.textContent?.trim(),
+              fullDescription: document.querySelector('.lis-container__job__content__description')?.textContent?.trim()
+            };
+          });
 
-              await jobPage.close();
-            } catch (error) {
-              console.log(`Couldn't fetch details for ${job.link}:`, error);
-            }
-          }
+          job.jobType = jobDetails.jobType;
+          job.description = jobDetails.fullDescription || job.description;
+          job.date = jobDetails.date;
+          job.apply_before = jobDetails.apply_before;
+          job.category = jobDetails.category;
+          job.location = jobDetails.location as string;
+
+          await jobPage.close();
+        } catch (error) {
+          console.log(`Couldn't fetch details for ${job.link}:`, error);
         }
+      }
+    }
 
     await browser.close();
     return jobs;
