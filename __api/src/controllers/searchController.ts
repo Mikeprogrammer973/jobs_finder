@@ -35,14 +35,14 @@ export const searchJobs = async (req: Request, res: Response) => {
   };
 
   // Verificar cache
-  if (from_cache === 'true') {
-    const cached = await getCache(key);
-    if (cached) {
-      sendEvent({ status: 'complete', cached: true, data: cached }, 'complete');
-      res.end();
-      return;
-    }
-  }
+  // if (from_cache === 'true') {
+  //   const cached = await getCache(key);
+  //   if (cached) {
+  //     sendEvent({ status: 'complete', cached: true, data: cached }, 'complete');
+  //     res.end();
+  //     return;
+  //   }
+  // }
 
   // Lista de scrapers com identificadores
   const scrapers = [
@@ -96,7 +96,7 @@ export const searchJobs = async (req: Request, res: Response) => {
     }
   }
 
-  await setCache(key, allResults, 3600);
+  // await setCache(key, allResults, 3600);
   sendEvent({ 
     status: 'complete', 
     cached: false, 

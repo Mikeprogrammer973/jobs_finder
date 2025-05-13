@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.searchJobs = void 0;
-const cache_1 = require("../utils/cache");
 const dice_1 = require("../scrapers/dice");
 const searchJobs = async (req, res) => {
     const { query = '', location = '', page = 1, remote, type, source, from_cache = 'false' } = req.query;
@@ -18,14 +17,14 @@ const searchJobs = async (req, res) => {
         res.flushHeaders();
     };
     // Verificar cache
-    if (from_cache === 'true') {
-        const cached = await (0, cache_1.getCache)(key);
-        if (cached) {
-            sendEvent({ status: 'complete', cached: true, data: cached }, 'complete');
-            res.end();
-            return;
-        }
-    }
+    // if (from_cache === 'true') {
+    //   const cached = await getCache(key);
+    //   if (cached) {
+    //     sendEvent({ status: 'complete', cached: true, data: cached }, 'complete');
+    //     res.end();
+    //     return;
+    //   }
+    // }
     // Lista de scrapers com identificadores
     const scrapers = [
         // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
@@ -73,7 +72,7 @@ const searchJobs = async (req, res) => {
             });
         }
     }
-    await (0, cache_1.setCache)(key, allResults, 3600);
+    // await setCache(key, allResults, 3600);
     sendEvent({
         status: 'complete',
         cached: false,

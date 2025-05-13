@@ -57,33 +57,47 @@ export const scrapeDice = async (
 
         console.log(`Found ${max_pages} pages`);
 
+        const jobList: Job[] = []
+        
         console.log('Extracting job data...');
-        const jobs = await page.evaluate(() => {
-            const jobCards = Array.from(document.querySelectorAll('[data-job-guid]') || [])
-            return jobCards.map(card => {
-                return {
-                    title: card.querySelector('[data-testid="job-search-job-detail-link"]')?.textContent?.trim() || '',
-                    company: card.querySelector('[data-rac], .header')?.children[0].textContent?.trim() || '',
-                    logo: card.querySelector('[data-rac], .header')?.children[0].children[0].children[0].getAttribute('src') || '',
-                    location: card.querySelector('.content')?.children[1].children[0].children[0].textContent?.trim() || '',
-                    date: card.querySelector('.content')?.children[1].children[0].children[1].textContent?.trim() || '',
-                    salary: card.querySelector('.content')?.querySelector('[aria-labelledby="salary-label"]')?.textContent?.trim() || '',
-                    apply: card.querySelector('.content')?.querySelector('[aria-labelledby="easyApply-label"]')?.textContent?.trim() || '',
-                    jobType: card.querySelector('.content')?.querySelector('[aria-labelledby="employmentType-label"]')?.textContent?.trim() || '',
-                    link: card.querySelector('[data-testid="job-search-job-detail-link"]')?.getAttribute('href') || '',
-                    description: card.querySelector('.card-description, .job-description')?.textContent?.trim(),
-                    source: 'Dice'
-                } as Job;
-            });
-        });
 
-        console.log(`Found ${jobs.length} jobs`);
-        return jobs;
+        for(let i = 0; i < max_pages; i++){
+            const url = `https://www.dice.com/jobs?q=${encodeURIComponent(query)}&location=${encodeURIComponent(location)}&page=${i+1}`;
+        
+            console.log(`Navigating to: ${url}`);
+            await page.goto(url, {
+                waitUntil: 'domcontentloaded',
+                timeout: timeout
+            });
+
+            const jobs = await page.evaluate(() => {
+                const jobCards = Array.from(document.querySelectorAll('[data-job-guid]') || [])
+                return jobCards.map(card => {
+                    return {
+                        title: card.querySelector('[data-testid="job-search-job-detail-link"]')?.textContent?.trim() || '',
+                        company: card.querySelector('[data-rac], .header')?.children[0].textContent?.trim() || '',
+                        logo: card.querySelector('[data-rac], .header')?.children[0].children[0].children[0].getAttribute('src') || '',
+                        location: card.querySelector('.content')?.children[1].children[0].children[0].textContent?.trim() || '',
+                        date: card.querySelector('.content')?.children[1].children[0].children[1].textContent?.trim() || '',
+                        salary: card.querySelector('.content')?.querySelector('[aria-labelledby="salary-label"]')?.textContent?.trim() || '',
+                        apply: card.querySelector('.content')?.querySelector('[aria-labelledby="easyApply-label"]')?.textContent?.trim() || '',
+                        jobType: card.querySelector('.content')?.querySelector('[aria-labelledby="employmentType-label"]')?.textContent?.trim() || '',
+                        link: card.querySelector('[data-testid="job-search-job-detail-link"]')?.getAttribute('href') || '',
+                        description: card.querySelector('.card-description, .job-description')?.textContent?.trim(),
+                        source: 'Dice'
+                    } as Job;
+                });
+            });
+
+            jobList.push(...jobs)
+        }
+        
+        console.log(`Found ${jobList.length} jobs`);
+        return jobList;
+        
 
     } catch (error) {
         console.error('Error scraping Dice:', error);
-        // Take screenshot for debugging
-        // await page.screenshot({ path: 'dice-error.png' });
         return [];
     } finally {
         await browser.close();
