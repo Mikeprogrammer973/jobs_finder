@@ -6,12 +6,22 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeGlassdoor = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
-const scrapeGlassdoor = async (query, location = '', page = 1, maxJobs = 10, headless = false // Mantenha false para debug
-) => {
+const promises_1 = require("timers/promises");
+async function autoScroll(page) {
+    let lastHeight = await page.evaluate('document.body.scrollHeight');
+    let currentHeight = 0;
+    while (currentHeight < lastHeight) {
+        await page.evaluate('window.scrollBy(0, 500)');
+        await (0, promises_1.setTimeout)(1000);
+        currentHeight = await page.evaluate('window.scrollY');
+        lastHeight = await page.evaluate('document.body.scrollHeight');
+    }
+}
+const scrapeGlassdoor = async (query, location = '', page = 1, maxJobs = 0) => {
     // Configuração avançada para evitar detecção
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
     const browser = await puppeteer_extra_1.default.launch({
-        headless,
+        headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
@@ -46,8 +56,38 @@ const scrapeGlassdoor = async (query, location = '', page = 1, maxJobs = 10, hea
         });
         // Verificação de bloqueios
         await checkForBlocks(pageObj);
-        // Espera dinâmica pelos resultados
         await waitForJobListings(pageObj);
+        let allJobsLoaded = false;
+        let safetyCounter = 0;
+        const MAX_ATTEMPTS = 1;
+        while (!allJobsLoaded && safetyCounter < MAX_ATTEMPTS) {
+            safetyCounter++;
+            try {
+                // Tenta encontrar e clicar no botão
+                const loadMoreButton = await pageObj.$('button[data-test="load-more"], .loadMoreJobs');
+                if (loadMoreButton) {
+                    await loadMoreButton.click();
+                    console.log('Clicou no botão "Load More Jobs"');
+                    await pageObj.waitForResponse(response => response.url().includes('jobListing') && response.status() === 200, { timeout: 3000 });
+                }
+                else {
+                    const noMoreJobs = await pageObj.evaluate(() => {
+                        return document.querySelector('.noMoreJobs, .no-more-jobs') !== null;
+                    });
+                    if (noMoreJobs) {
+                        console.log('Todas as vagas foram carregadas');
+                        allJobsLoaded = true;
+                    }
+                    else {
+                        console.log('Botão não encontrado, tentando scroll...');
+                        await autoScroll(pageObj);
+                    }
+                }
+            }
+            catch (error) {
+                console.log(`Tentativa ${safetyCounter} falhou:`, error.message);
+            }
+        }
         // Extração dos dados
         const jobs = await extractJobData(pageObj, maxJobs);
         return jobs;
@@ -127,7 +167,8 @@ async function waitForJobListings(page) {
 }
 async function extractJobData(page, maxJobs) {
     return page.evaluate((max) => {
-        const jobElements = Array.from(document.querySelectorAll('[data-test="jobListing"], .react-job-listing, .jl')).slice(0, max);
+        let jobElements = Array.from(document.querySelectorAll('[data-test="jobListing"], .react-job-listing, .jl'));
+        jobElements = jobElements.slice(0, max !== 0 ? max : jobElements.length);
         return jobElements.map((el) => {
             const titleEl = el.querySelector('[data-test="job-title"], .JobCard_jobTitle__GLyJ1');
             const companyEl = el.querySelector('[data-test="employer-name"], .EmployerProfile_compactEmployerName__9MGcV');

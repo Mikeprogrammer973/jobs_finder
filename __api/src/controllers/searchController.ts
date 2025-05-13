@@ -6,6 +6,7 @@ import { scrapeWWR } from '../scrapers/weworkremotely';
 import { getCache, setCache } from '../utils/cache';
 import { scrapeGlassdoor } from '../scrapers/glassdoor';
 import { scrapeSimplyHired } from '../scrapers/simplyhired';
+import { scrapeDice } from '../scrapers/dice';
 
 export const searchJobs = async (req: Request, res: Response) => {
   const {
@@ -33,7 +34,7 @@ export const searchJobs = async (req: Request, res: Response) => {
     res.flushHeaders()
   };
 
-  // Verificar cache primeiro
+  // Verificar cache
   if (from_cache === 'true') {
     const cached = await getCache(key);
     if (cached) {
@@ -45,12 +46,13 @@ export const searchJobs = async (req: Request, res: Response) => {
 
   // Lista de scrapers com identificadores
   const scrapers = [
-    { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
-    { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
-    { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
-    { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-    { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-    { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString(), 10) },
+    // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
+    // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
+    // { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
+    // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
+    // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString(), Number(page.toLocaleString()) )},
+    // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString(), 10) },
+    { name: 'Dice', fn: () => scrapeDice(query.toString()) }
   ];
 
   // Objeto para armazenar resultados
@@ -83,7 +85,6 @@ export const searchJobs = async (req: Request, res: Response) => {
         data: filtered 
       });
 
-      // Pequeno delay entre scrapers
       await new Promise(resolve => setTimeout(resolve, 500));
       
     } catch (error: any) {
@@ -95,7 +96,6 @@ export const searchJobs = async (req: Request, res: Response) => {
     }
   }
 
-  // Armazenar em cache e enviar finalização
   await setCache(key, allResults, 3600);
   sendEvent({ 
     status: 'complete', 

@@ -19,7 +19,6 @@ interface LinkedInJob {
 
 export const scrapeLinkedIn = async (
   query: string,
-  maxJobs: number = 10, 
   page: number = 1,
   headless: boolean = true
 ): Promise<LinkedInJob[]> => {
@@ -62,7 +61,7 @@ export const scrapeLinkedIn = async (
 
     // Extração dos dados principais
     const jobElements = await pageObj.$$('.jobs-search__results-list li');
-    const limitedJobs = jobElements.splice(0, maxJobs);
+    const limitedJobs = jobElements;
     const jobs: LinkedInJob[] = [];
 
     for (const [index, elHandle] of limitedJobs.entries()) {
@@ -131,10 +130,6 @@ export const scrapeLinkedIn = async (
               qualifications: jobDetails.qualifications,
               source: 'LinkedIn'
             });
-
-            if (jobs.length >= maxJobs) {
-              break;
-            }
 
             // Delay aleatório 
             await new Promise(resolve => 

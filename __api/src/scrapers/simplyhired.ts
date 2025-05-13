@@ -23,7 +23,6 @@ export const scrapeSimplyHired = async (
   query: string,
   location: string = '',
   page: number = 1,
-  maxJobs: number = 2,
   headless: boolean = true
 ): Promise<SimplyHiredJob[]> => {
   puppeteer.use(StealthPlugin());
@@ -80,8 +79,8 @@ export const scrapeSimplyHired = async (
     for (const selector of selectorsToTry) {
       try {
         await pageObj.waitForSelector(selector, { timeout: 15000 });
-        jobs = await pageObj.evaluate((sel, max) => {
-          const cards = Array.from(document.querySelectorAll(sel)).slice(0, max);
+        jobs = await pageObj.evaluate((sel) => {
+          const cards = Array.from(document.querySelectorAll(sel))
           return cards.map((el) => ({
             title: el.querySelector('.css-1djbb1k')?.textContent?.trim() || '',
             company: el.querySelector('[data-testid="companyName"]')?.textContent?.trim() || '',
@@ -94,7 +93,7 @@ export const scrapeSimplyHired = async (
             date: el.querySelector('.jobposting-date, .date')?.textContent?.trim(),
             rating: el.querySelector('[data-testid="searchSerpJobCompanyRating"]')?.textContent?.trim()
           }));
-        }, selector, maxJobs);
+        }, selector);
         
         if (jobs.length > 0) break;
       } catch (err) {

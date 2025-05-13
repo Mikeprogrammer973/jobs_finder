@@ -7,7 +7,7 @@ exports.scrapeSimplyHired = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
 const promises_1 = require("timers/promises");
-const scrapeSimplyHired = async (query, location = '', page = 1, maxJobs = 2, headless = true) => {
+const scrapeSimplyHired = async (query, location = '', page = 1, headless = true) => {
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
     const browser = await puppeteer_extra_1.default.launch({
         headless,
@@ -53,8 +53,8 @@ const scrapeSimplyHired = async (query, location = '', page = 1, maxJobs = 2, he
         for (const selector of selectorsToTry) {
             try {
                 await pageObj.waitForSelector(selector, { timeout: 15000 });
-                jobs = await pageObj.evaluate((sel, max) => {
-                    const cards = Array.from(document.querySelectorAll(sel)).slice(0, max);
+                jobs = await pageObj.evaluate((sel) => {
+                    const cards = Array.from(document.querySelectorAll(sel));
                     return cards.map((el) => ({
                         title: el.querySelector('.css-1djbb1k')?.textContent?.trim() || '',
                         company: el.querySelector('[data-testid="companyName"]')?.textContent?.trim() || '',
@@ -67,7 +67,7 @@ const scrapeSimplyHired = async (query, location = '', page = 1, maxJobs = 2, he
                         date: el.querySelector('.jobposting-date, .date')?.textContent?.trim(),
                         rating: el.querySelector('[data-testid="searchSerpJobCompanyRating"]')?.textContent?.trim()
                     }));
-                }, selector, maxJobs);
+                }, selector);
                 if (jobs.length > 0)
                     break;
             }

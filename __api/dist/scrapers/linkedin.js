@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeLinkedIn = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
-const scrapeLinkedIn = async (query, maxJobs = 10, page = 1, headless = true) => {
+const scrapeLinkedIn = async (query, page = 1, headless = true) => {
     // Configuração do Puppeteer com Stealth
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
     const browser = await puppeteer_extra_1.default.launch({
@@ -39,7 +39,7 @@ const scrapeLinkedIn = async (query, maxJobs = 10, page = 1, headless = true) =>
         await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 });
         // Extração dos dados principais
         const jobElements = await pageObj.$$('.jobs-search__results-list li');
-        const limitedJobs = jobElements.splice(0, maxJobs);
+        const limitedJobs = jobElements;
         const jobs = [];
         for (const [index, elHandle] of limitedJobs.entries()) {
             try {
@@ -96,9 +96,6 @@ const scrapeLinkedIn = async (query, maxJobs = 10, page = 1, headless = true) =>
                             qualifications: jobDetails.qualifications,
                             source: 'LinkedIn'
                         });
-                        if (jobs.length >= maxJobs) {
-                            break;
-                        }
                         // Delay aleatório 
                         await new Promise(resolve => setTimeout(resolve, 2000 + Math.random() * 3000));
                     }

@@ -17,17 +17,28 @@ interface GlassdoorJob {
   jobType?: string;
 }
 
+async function autoScroll(page: Page): Promise<void> {
+  let lastHeight = await page.evaluate('document.body.scrollHeight') as number;
+  let currentHeight = 0;
+  
+  while (currentHeight < lastHeight) {
+    await page.evaluate('window.scrollBy(0, 500)');
+    await setTimeout(1000);
+    currentHeight = await page.evaluate('window.scrollY') as number;
+    lastHeight = await page.evaluate('document.body.scrollHeight') as number;
+  }
+}
+
 export const scrapeGlassdoor = async (
   query: string,
   location: string = '',
   page: number = 1,
-  maxJobs: number = 10,
-  headless: boolean = false // Mantenha false para debug
+  maxJobs: number = 0,
 ): Promise<GlassdoorJob[]> => {
   // Configuração avançada para evitar detecção
   puppeteer.use(StealthPlugin());
   const browser = await puppeteer.launch({
-    headless,
+    headless: true,
     args: [
       '--no-sandbox',
       '--disable-setuid-sandbox',
@@ -68,8 +79,45 @@ export const scrapeGlassdoor = async (
     // Verificação de bloqueios
     await checkForBlocks(pageObj);
 
-    // Espera dinâmica pelos resultados
     await waitForJobListings(pageObj);
+
+    let allJobsLoaded = false;
+    let safetyCounter = 0;
+    const MAX_ATTEMPTS = 1;
+
+    while (!allJobsLoaded && safetyCounter < MAX_ATTEMPTS) {
+      safetyCounter++;
+      
+      try {
+        // Tenta encontrar e clicar no botão
+        const loadMoreButton = await pageObj.$('button[data-test="load-more"], .loadMoreJobs');
+        
+        if (loadMoreButton) {
+          await loadMoreButton.click();
+          console.log('Clicou no botão "Load More Jobs"');
+          
+          await pageObj.waitForResponse(
+            response => response.url().includes('jobListing') && response.status() === 200,
+            { timeout: 3000 }
+          );
+
+        } else {
+          const noMoreJobs = await pageObj.evaluate(() => {
+            return document.querySelector('.noMoreJobs, .no-more-jobs') !== null;
+          });
+          
+          if (noMoreJobs) {
+            console.log('Todas as vagas foram carregadas');
+            allJobsLoaded = true;
+          } else {
+            console.log('Botão não encontrado, tentando scroll...');
+            await autoScroll(pageObj);
+          }
+        }
+      } catch (error: any) {
+        console.log(`Tentativa ${safetyCounter} falhou:`, error.message);
+      }
+    }
 
     // Extração dos dados
     const jobs = await extractJobData(pageObj, maxJobs);
@@ -158,9 +206,8 @@ async function waitForJobListings(page: Page): Promise<void> {
 
 async function extractJobData(page: Page, maxJobs: number): Promise<GlassdoorJob[]> {
   return page.evaluate((max) => {
-    const jobElements = Array.from(
-      document.querySelectorAll('[data-test="jobListing"], .react-job-listing, .jl')
-    ).slice(0, max);
+    let jobElements = Array.from(document.querySelectorAll('[data-test="jobListing"], .react-job-listing, .jl'))
+    jobElements = jobElements.slice(0, max !== 0 ? max : jobElements.length);
 
     return jobElements.map((el) => {
       const titleEl = el.querySelector('[data-test="job-title"], .JobCard_jobTitle__GLyJ1');
