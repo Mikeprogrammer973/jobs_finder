@@ -22,7 +22,7 @@ interface WWRJob {
 export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
   puppeteer.use(StealthPlugin());
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',
+    // executablePath: '/usr/bin/chromium-browser',
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
@@ -30,7 +30,7 @@ export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
   try {
     const page = await browser.newPage();
     
-    await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36');
+    await page.setUserAgent('Mozilla/5.0');
     await page.setViewport({ width: 1366, height: 768 });
 
     await page.goto(`https://weworkremotely.com/remote-jobs/search?term=${encodeURIComponent(query)}`, {
