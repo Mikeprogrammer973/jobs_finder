@@ -21,7 +21,7 @@ interface WWRJob {
 }
 
 export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
-  puppeteerExtra.use(StealthPlugin());
+  // puppeteerExtra.use(StealthPlugin());
   const browser = await puppeteer.launch({
     executablePath: '/usr/bin/chromium-browser',
     headless: true,
