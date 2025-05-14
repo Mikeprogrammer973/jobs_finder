@@ -1,7 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.searchJobs = void 0;
-const simplyhired_1 = require("../scrapers/simplyhired");
+const zipRecruiter_1 = require("../scrapers/zipRecruiter");
 const searchJobs = async (req, res) => {
     const { query = '', location = '', page = 1, remote, type, source } = req.query;
     const key = `jobs:${query}:${location}:${page}:${remote}:${type}:${source}`;
@@ -16,19 +16,17 @@ const searchJobs = async (req, res) => {
         res.write(`data: ${JSON.stringify(data)}\n\n`);
         res.flushHeaders();
     };
-    // Lista de scrapers com identificadores
     const scrapers = [
         // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
         // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
         // { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
         // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
         // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
-        // { name: 'Dice', fn: () => scrapeDice(query.toString()) } 
-        { name: 'SimplyHired', fn: () => (0, simplyhired_1.scrapeSimplyHired)(query.toString(), location.toString()) },
+        // { name: 'Dice', fn: () => scrapeDice(query.toString()) },
+        { name: 'Monster', fn: () => (0, zipRecruiter_1.scrapeZipRecruiter)(query.toString()) }
+        // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
     ];
-    // Objeto para armazenar resultados
     const allResults = [];
-    // Processar cada scraper individualmente
     for (const { name, fn } of scrapers) {
         try {
             console.log({ status: 'progress', message: `Iniciando busca no ${name}...` });

@@ -6,6 +6,7 @@ import { scrapeWWR } from '../scrapers/weworkremotely';
 import { scrapeGlassdoor } from '../scrapers/glassdoor';
 import { scrapeSimplyHired } from '../scrapers/simplyhired';
 import { scrapeDice } from '../scrapers/dice';
+import { scrapeZipRecruiter } from '../scrapers/zipRecruiter';
 
 export const searchJobs = async (req: Request, res: Response) => {
   const {
@@ -32,21 +33,19 @@ export const searchJobs = async (req: Request, res: Response) => {
     res.flushHeaders()
   };
 
-  // Lista de scrapers com identificadores
   const scrapers = [
     // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
     // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
     // { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
     // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
     // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
-    // { name: 'Dice', fn: () => scrapeDice(query.toString()) } 
-    { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
+    // { name: 'Dice', fn: () => scrapeDice(query.toString()) },
+    { name: 'Monster', fn: () => scrapeZipRecruiter(query.toString()) }
+    // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
   ];
 
-  // Objeto para armazenar resultados
   const allResults: any[] = [];
 
-  // Processar cada scraper individualmente
   for (const { name, fn } of scrapers) {
     try {
       console.log({ status: 'progress', message: `Iniciando busca no ${name}...` });
