@@ -41,10 +41,10 @@ const scrapeDice = async (query, options = {}) => {
                 return jobCards.map(card => {
                     return {
                         title: card.querySelector('[data-testid="job-search-job-detail-link"]')?.textContent?.trim() || '',
-                        company: card.querySelector('[data-rac], .header')?.children[0].textContent?.trim() || '',
-                        logo: card.querySelector('[data-rac], .header')?.children[0].children[0].children[0].getAttribute('src') || '',
-                        location: card.querySelector('.content')?.children[1].children[0].children[0].textContent?.trim() || '',
-                        date: card.querySelector('.content')?.children[1].children[0].children[1].textContent?.trim() || '',
+                        company: card.querySelector('[data-rac], .header')?.children[0]?.textContent?.trim() || '',
+                        logo: card.querySelector('[data-rac], .header')?.children[0]?.children[0]?.children[0]?.getAttribute('src') || '',
+                        location: card.querySelector('.content')?.children[1]?.children[0]?.children[0]?.textContent?.trim() || '',
+                        date: card.querySelector('.content')?.children[1]?.children[0]?.children[1]?.textContent?.trim() || '',
                         salary: card.querySelector('.content')?.querySelector('[aria-labelledby="salary-label"]')?.textContent?.trim() || '',
                         apply: card.querySelector('.content')?.querySelector('[aria-labelledby="easyApply-label"]')?.textContent?.trim() || '',
                         jobType: card.querySelector('.content')?.querySelector('[aria-labelledby="employmentType-label"]')?.textContent?.trim() || '',

@@ -1,5 +1,6 @@
 import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';;
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { setTimeout } from 'timers/promises';
 
 interface LinkedInJob {
   title: string;
@@ -10,7 +11,7 @@ interface LinkedInJob {
   description?: string;
   salary?: string;
   benefits?: string;
-  jobType?: string; // Part-time, Full-time, etc.
+  jobType?: string; 
   qualifications?: string;
   requirements?: string;
   logo?: string;
@@ -56,6 +57,30 @@ export const scrapeLinkedIn = async (
 
     // Espera pelos resultados
     await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 });
+
+
+    // Função para fazer scroll e carregar mais resultados
+    const autoScroll = async (maxScrolls: number = 100) => {
+      let previousHeight = 0;
+      let currentHeight = 0;
+      let scrollCount = 0;
+
+      while (scrollCount < maxScrolls) {
+        previousHeight = await pageObj.evaluate('document.body.scrollHeight') as number;
+        await pageObj.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+        await setTimeout(1000);
+        
+        currentHeight = await pageObj.evaluate('document.body.scrollHeight') as number;
+        if (currentHeight === previousHeight) {
+          break
+        }
+        
+        scrollCount++;
+        console.log(`Scroll realizado ${scrollCount}/${maxScrolls}. Altura da página: ${currentHeight}px`);
+      }
+    };
+
+    await autoScroll();
 
     // Extração dos dados principais
     const jobElements = await pageObj.$$('.jobs-search__results-list li');

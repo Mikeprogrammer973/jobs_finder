@@ -7,7 +7,8 @@ exports.scrapeSimplyHired = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
 const promises_1 = require("timers/promises");
-const scrapeSimplyHired = async (query, location = '', headless = true) => {
+let jobList = [];
+const scrapeSimplyHired = async (query, location = '', __max_pages = 5, headless = true, include_descriptions = false) => {
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
     const browser = await puppeteer_extra_1.default.launch({
         headless,
@@ -35,7 +36,6 @@ const scrapeSimplyHired = async (query, location = '', headless = true) => {
             }
         });
         const url = `https://www.simplyhired.com/search?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`;
-        console.log(`Navigating to: ${url}`);
         await pageObj.goto(url, {
             waitUntil: 'networkidle2',
             timeout: 60000
@@ -48,65 +48,40 @@ const scrapeSimplyHired = async (query, location = '', headless = true) => {
         if (isBlocked) {
             throw new Error('SimplyHired has blocked the request');
         }
-        const selectorsToTry = ['.css-obg9ou', '[data-testid="searchSerpJob"]', '[role="presentation"]', '.SerpJob-jobCard', '.job-card', '.card-job'];
-        let jobs = [];
-        for (const selector of selectorsToTry) {
-            try {
-                await pageObj.waitForSelector(selector, { timeout: 15000 });
-                jobs = await pageObj.evaluate((sel) => {
-                    const cards = Array.from(document.querySelectorAll(sel));
-                    return cards.map((el) => ({
-                        title: el.querySelector('.css-1djbb1k')?.textContent?.trim() || '',
-                        company: el.querySelector('[data-testid="companyName"]')?.textContent?.trim() || '',
-                        location: el.querySelector('[data-testid="searchSerpJobLocation"], .css-1t92pv')?.textContent?.trim() || '',
-                        salary: el.querySelector('[data-testid="searchSerpJobSalaryConfirmed"]')?.textContent?.trim(),
-                        link: 'https://www.simplyhired.com' + (el.querySelector('a')?.getAttribute('href') || ''),
-                        source: 'SimplyHired',
-                        description_short: el.querySelector('[data-testid="searchSerpJobSnippet"]')?.textContent?.trim(),
-                        description: el.querySelector('.jobposting-snippet, .snippet')?.textContent?.trim(),
-                        date: el.querySelector('.jobposting-date, .date')?.textContent?.trim(),
-                        rating: el.querySelector('[data-testid="searchSerpJobCompanyRating"]')?.textContent?.trim()
-                    }));
-                }, selector);
-                if (jobs.length > 0)
-                    break;
-            }
-            catch (err) {
-                console.log(`Selector ${selector} not found, trying next...`);
-            }
-        }
-        // Visit individual job pages for more details
-        if (jobs.length > 0) {
-            for (const job of jobs) {
-                try {
-                    const jobPage = await browser.newPage();
-                    await jobPage.goto(job.link, { waitUntil: 'domcontentloaded', timeout: 30000 });
-                    const jobDetails = await jobPage.evaluate(() => {
-                        const typeEl = document.querySelector('.css-nzjs22');
-                        return {
-                            jobType: typeEl?.querySelector('[data-testid="viewJobBodyJobDetailsJobType"]')?.textContent?.trim(),
-                            logo: typeEl?.querySelector('[data-testid="companyVJLogo"]')?.getAttribute('src'),
-                            date: typeEl?.querySelector('[data-testid="viewJobBodyJobPostingTimestamp"]')?.textContent?.trim(),
-                            benefits: Array.from(typeEl?.querySelector('[data-testid="viewJobBodyJobBenefits"]')?.querySelectorAll('[data-testid="viewJobBenefitItem"]') || []).map(el => el.textContent?.trim()),
-                            qualifications: Array.from(typeEl?.querySelector('[data-testid="viewJobQualificationsContainer"]')?.querySelectorAll('[data-testid="viewJobQualificationItem"]') || []).map(el => el.textContent?.trim()),
-                            fullDescription: document.querySelector('[data-testid="viewJobBodyJobFullDescriptionContent"]')?.textContent?.trim()
-                        };
-                    });
-                    job.jobType = jobDetails.jobType;
-                    job.description = jobDetails.fullDescription || job.description;
-                    job.date = jobDetails.date;
-                    job.benefits = jobDetails.benefits;
-                    job.qualifications = jobDetails.qualifications;
-                    job.logo = jobDetails.logo;
-                    await (0, promises_1.setTimeout)(2000 + Math.random() * 3000);
-                    await jobPage.close();
-                }
-                catch (error) {
-                    console.log(`Couldn't fetch details for ${job.link}:`, error);
+        await get_jobs(pageObj, url, __max_pages);
+        if (include_descriptions) {
+            if (jobList.length > 0) {
+                for (const job of jobList) {
+                    try {
+                        const jobPage = await browser.newPage();
+                        await jobPage.goto(job.link, { waitUntil: 'domcontentloaded', timeout: 30000 });
+                        const jobDetails = await jobPage.evaluate(() => {
+                            const typeEl = document.querySelector('.css-nzjs22');
+                            return {
+                                jobType: typeEl?.querySelector('[data-testid="viewJobBodyJobDetailsJobType"]')?.textContent?.trim(),
+                                logo: typeEl?.querySelector('[data-testid="companyVJLogo"]')?.getAttribute('src'),
+                                date: typeEl?.querySelector('[data-testid="viewJobBodyJobPostingTimestamp"]')?.textContent?.trim(),
+                                benefits: Array.from(typeEl?.querySelector('[data-testid="viewJobBodyJobBenefits"]')?.querySelectorAll('[data-testid="viewJobBenefitItem"]') || []).map(el => el.textContent?.trim()),
+                                qualifications: Array.from(typeEl?.querySelector('[data-testid="viewJobQualificationsContainer"]')?.querySelectorAll('[data-testid="viewJobQualificationItem"]') || []).map(el => el.textContent?.trim()),
+                                fullDescription: document.querySelector('[data-testid="viewJobBodyJobFullDescriptionContent"]')?.textContent?.trim()
+                            };
+                        });
+                        job.jobType = jobDetails.jobType;
+                        job.description = jobDetails.fullDescription || job.description;
+                        job.date = jobDetails.date;
+                        job.benefits = jobDetails.benefits;
+                        job.qualifications = jobDetails.qualifications;
+                        job.logo = jobDetails.logo;
+                        await (0, promises_1.setTimeout)(2000 + Math.random() * 3000);
+                        await jobPage.close();
+                    }
+                    catch (error) {
+                        console.log(`Couldn't fetch details for ${job.link}:`, error);
+                    }
                 }
             }
         }
-        return jobs;
+        return jobList;
     }
     catch (error) {
         console.error('Error scraping SimplyHired:', error);
@@ -122,3 +97,72 @@ const scrapeSimplyHired = async (query, location = '', headless = true) => {
     }
 };
 exports.scrapeSimplyHired = scrapeSimplyHired;
+async function load_more(pageObj) {
+    const paginationSelector = '[data-testid="pageNumberContainer"]';
+    try {
+        await pageObj.waitForSelector(paginationSelector, { timeout: 15000 });
+        const nextPageUrl = await pageObj.evaluate((selector) => {
+            const pages = Array.from(document.querySelector(selector)?.children || []);
+            for (let i = 0; i < pages.length; i++) {
+                const currentPage = pages[i];
+                if (currentPage.getAttribute('aria-current') === 'true') {
+                    // Verifica se existe próxima página
+                    if (i < pages.length - 1) {
+                        const nextPage = pages[i + 1];
+                        // Garante que não é o botão "Next" (caso exista)
+                        if (!nextPage.getAttribute('aria-label')?.includes('Next Page')) {
+                            return { next: nextPage.getAttribute('href'), current: Number(currentPage.textContent?.trim()) };
+                        }
+                    }
+                    break;
+                }
+            }
+            return null;
+        }, paginationSelector);
+        return nextPageUrl ? nextPageUrl : null;
+    }
+    catch (error) {
+        console.log('Não foi possível encontrar o seletor de paginação:', error);
+        return null;
+    }
+}
+async function get_jobs(pageObj, url, max_pages) {
+    console.log(`Navigating to: ${url}`);
+    await pageObj.goto(url, {
+        waitUntil: 'networkidle2',
+        timeout: 60000
+    });
+    const selectorsToTry = ['.css-obg9ou', '[data-testid="searchSerpJob"]', '[role="presentation"]', '.SerpJob-jobCard', '.job-card', '.card-job'];
+    let jobs = [];
+    for (const selector of selectorsToTry) {
+        try {
+            await pageObj.waitForSelector(selector, { timeout: 15000 });
+            jobs = await pageObj.evaluate((sel) => {
+                const cards = Array.from(document.querySelectorAll(sel));
+                return cards.map((el) => ({
+                    title: el.querySelector('.css-1djbb1k')?.textContent?.trim() || '',
+                    company: el.querySelector('[data-testid="companyName"]')?.textContent?.trim() || '',
+                    location: el.querySelector('[data-testid="searchSerpJobLocation"], .css-1t92pv')?.textContent?.trim() || '',
+                    salary: el.querySelector('[data-testid="searchSerpJobSalaryConfirmed"]')?.textContent?.trim(),
+                    link: 'https://www.simplyhired.com' + (el.querySelector('a')?.getAttribute('href') || ''),
+                    source: 'SimplyHired',
+                    description_short: el.querySelector('[data-testid="searchSerpJobSnippet"]')?.textContent?.trim(),
+                    description: el.querySelector('.jobposting-snippet, .snippet')?.textContent?.trim(),
+                    date: el.querySelector('.jobposting-date, .date')?.textContent?.trim(),
+                    rating: el.querySelector('[data-testid="searchSerpJobCompanyRating"]')?.textContent?.trim()
+                }));
+            }, selector);
+            if (jobs.length > 0) {
+                const nextPageUrl = await load_more(pageObj);
+                if (nextPageUrl && nextPageUrl.current <= max_pages) {
+                    await get_jobs(pageObj, nextPageUrl.next, max_pages);
+                }
+                break;
+            }
+        }
+        catch (err) {
+            console.log(`Selector ${selector} not found, trying next...`);
+        }
+    }
+    jobList.push(...jobs);
+}

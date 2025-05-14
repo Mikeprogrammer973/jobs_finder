@@ -6,7 +6,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeLinkedIn = void 0;
 const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
-;
+const promises_1 = require("timers/promises");
 const scrapeLinkedIn = async (query, headless = true) => {
     // Configuração do Puppeteer com Stealth
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
@@ -37,6 +37,24 @@ const scrapeLinkedIn = async (query, headless = true) => {
         }
         // Espera pelos resultados
         await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 });
+        // Função para fazer scroll e carregar mais resultados
+        const autoScroll = async (maxScrolls = 100) => {
+            let previousHeight = 0;
+            let currentHeight = 0;
+            let scrollCount = 0;
+            while (scrollCount < maxScrolls) {
+                previousHeight = await pageObj.evaluate('document.body.scrollHeight');
+                await pageObj.evaluate('window.scrollTo(0, document.body.scrollHeight)');
+                await (0, promises_1.setTimeout)(1000);
+                currentHeight = await pageObj.evaluate('document.body.scrollHeight');
+                if (currentHeight === previousHeight) {
+                    break;
+                }
+                scrollCount++;
+                console.log(`Scroll realizado ${scrollCount}/${maxScrolls}. Altura da página: ${currentHeight}px`);
+            }
+        };
+        await autoScroll();
         // Extração dos dados principais
         const jobElements = await pageObj.$$('.jobs-search__results-list li');
         const limitedJobs = jobElements;

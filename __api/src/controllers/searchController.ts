@@ -3,7 +3,6 @@ import { scrapeLinkedIn } from '../scrapers/linkedin';
 import { scrapeRemoteOK } from '../scrapers/remoteok';
 import { scrapeRemotive } from '../scrapers/remotive';
 import { scrapeWWR } from '../scrapers/weworkremotely';
-import { getCache, setCache } from '../utils/cache';
 import { scrapeGlassdoor } from '../scrapers/glassdoor';
 import { scrapeSimplyHired } from '../scrapers/simplyhired';
 import { scrapeDice } from '../scrapers/dice';
@@ -15,8 +14,7 @@ export const searchJobs = async (req: Request, res: Response) => {
     page = 1,
     remote,
     type,
-    source,
-    from_cache = 'false'
+    source
   } = req.query;
 
   const key = `jobs:${query}:${location}:${page}:${remote}:${type}:${source}`;
@@ -34,25 +32,15 @@ export const searchJobs = async (req: Request, res: Response) => {
     res.flushHeaders()
   };
 
-  // Verificar cache
-  // if (from_cache === 'true') {
-  //   const cached = await getCache(key);
-  //   if (cached) {
-  //     sendEvent({ status: 'complete', cached: true, data: cached }, 'complete');
-  //     res.end();
-  //     return;
-  //   }
-  // }
-
   // Lista de scrapers com identificadores
   const scrapers = [
-    { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
-    { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
-    { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
-    { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-    // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, FIX BUG
-    { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
-    { name: 'Dice', fn: () => scrapeDice(query.toString()) } 
+    // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
+    // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
+    // { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
+    // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
+    // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
+    // { name: 'Dice', fn: () => scrapeDice(query.toString()) } 
+    { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
   ];
 
   // Objeto para armazenar resultados
@@ -61,7 +49,7 @@ export const searchJobs = async (req: Request, res: Response) => {
   // Processar cada scraper individualmente
   for (const { name, fn } of scrapers) {
     try {
-      // sendEvent({ status: 'progress', message: `Iniciando busca no ${name}...` });
+      console.log({ status: 'progress', message: `Iniciando busca no ${name}...` });
       
       const startTime = Date.now();
       const results = await fn();
@@ -96,7 +84,6 @@ export const searchJobs = async (req: Request, res: Response) => {
     }
   }
 
-  // await setCache(key, allResults, 3600);
   sendEvent({ 
     status: 'complete', 
     cached: false, 
