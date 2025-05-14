@@ -34,14 +34,14 @@ export const searchJobs = async (req: Request, res: Response) => {
   };
 
   const scrapers = [
-    // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
-    // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
-    // { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
-    // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-    // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
-    // { name: 'Dice', fn: () => scrapeDice(query.toString()) },
-    { name: 'Monster', fn: () => scrapeZipRecruiter(query.toString()) }
-    // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
+    { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
+    { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
+    { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
+    { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
+    { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
+    { name: 'Dice', fn: () => scrapeDice(query.toString())},
+    { name: 'ZipRecruiter', fn: () => scrapeZipRecruiter(query.toString()), location },
+    { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
   ];
 
   const allResults: any[] = [];
@@ -59,6 +59,7 @@ export const searchJobs = async (req: Request, res: Response) => {
         if (remote && remote !== 'false' && job.type?.toLowerCase() !== 'remote') return false;
         if (type && job.type && job.type.toLowerCase() !== type.toString().toLowerCase()) return false;
         if (source && job.source && job.source.toLowerCase() !== source.toString().toLowerCase()) return false;
+        if (location && job.location && !job.location.toLowerCase().includes(location.toString().toLowerCase())) return false;
         return true;
       });
 

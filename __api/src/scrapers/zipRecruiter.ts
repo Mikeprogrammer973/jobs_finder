@@ -9,7 +9,7 @@ interface Job {
   location: string;
   link: string;
   date?: string;
-  description?: string;
+  logo?: string;
   salary?: string;
   jobType?: string;
   source: string;
@@ -25,8 +25,8 @@ export const scrapeZipRecruiter = async (
   } = {}
 ): Promise<Job[]> => {
   const {
-    headless = false,
-    maxPages = 3,
+    headless = true,
+    maxPages = 5,
     slowMo = 100
   } = options;
 
@@ -83,35 +83,29 @@ export const scrapeZipRecruiter = async (
         throw new Error('ZipRecruiter has blocked the request');
       }
 
-      // Wait for job cards
       try {
-        await page.waitForSelector('.job_content', { timeout: 30000 });
+        await page.waitForSelector('.job_result_two_pane', { timeout: 30000 });
       } catch (err) {
         console.log('No job cards found, ending pagination');
         break;
       }
 
-      // Scroll to load all jobs (ZipRecruiter uses lazy loading)
       await autoScroll(page);
 
       // Extract job data
       const pageJobs = await page.evaluate(() => {
-        return Array.from(document.querySelectorAll('.job_content')).map(el => {
-          const titleEl = el.querySelector('.job_title a');
-          const companyEl = el.querySelector('.company_name');
-          const locationEl = el.querySelector('.job_location');
-          const dateEl = el.querySelector('.job_age');
-          const descEl = el.querySelector('.job_snippet');
-          const salaryEl = el.querySelector('.job_compensation');
+        return Array.from(document.querySelectorAll('.job_result_two_pane')).map(el => {
+          const titleEl = el.querySelector('.text-header-sm [target="_self"]');
+          const companyEl = el.querySelector('[data-testid="job-card-company"]');
+          const locationEl = el.querySelector('[data-testid="job-card-location"]');
+          const logoEl = el.querySelector('[srcset]')
           
           return {
             title: titleEl?.textContent?.trim() || '',
             company: companyEl?.textContent?.trim() || '',
             location: locationEl?.textContent?.trim() || '',
             link: titleEl?.getAttribute('href') || '',
-            date: dateEl?.textContent?.trim(),
-            description: descEl?.textContent?.trim(),
-            salary: salaryEl?.textContent?.trim(),
+            logo: logoEl?.getAttribute('src') || '',
             source: 'ZipRecruiter'
           };
         });
@@ -123,7 +117,7 @@ export const scrapeZipRecruiter = async (
       console.log(`Found ${pageJobs.length} jobs on page ${currentPage}`);
 
       currentPage++;
-      await setTimeout(3000 + Math.random() * 4000); // Random delay 3-7s
+      await setTimeout(3000 + Math.random() * 4000); 
     }
 
     return jobs;

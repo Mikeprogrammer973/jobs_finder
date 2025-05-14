@@ -8,7 +8,7 @@ const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
 const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
 const promises_1 = require("timers/promises");
 const scrapeZipRecruiter = async (query, location = '', options = {}) => {
-    const { headless = false, maxPages = 3, slowMo = 100 } = options;
+    const { headless = true, maxPages = 5, slowMo = 100 } = options;
     puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
     const browser = await puppeteer_extra_1.default.launch({
         headless,
@@ -54,33 +54,27 @@ const scrapeZipRecruiter = async (query, location = '', options = {}) => {
             if (isBlocked) {
                 throw new Error('ZipRecruiter has blocked the request');
             }
-            // Wait for job cards
             try {
-                await page.waitForSelector('.job_content', { timeout: 30000 });
+                await page.waitForSelector('.job_result_two_pane', { timeout: 30000 });
             }
             catch (err) {
                 console.log('No job cards found, ending pagination');
                 break;
             }
-            // Scroll to load all jobs (ZipRecruiter uses lazy loading)
             await autoScroll(page);
             // Extract job data
             const pageJobs = await page.evaluate(() => {
-                return Array.from(document.querySelectorAll('.job_content')).map(el => {
-                    const titleEl = el.querySelector('.job_title a');
-                    const companyEl = el.querySelector('.company_name');
-                    const locationEl = el.querySelector('.job_location');
-                    const dateEl = el.querySelector('.job_age');
-                    const descEl = el.querySelector('.job_snippet');
-                    const salaryEl = el.querySelector('.job_compensation');
+                return Array.from(document.querySelectorAll('.job_result_two_pane')).map(el => {
+                    const titleEl = el.querySelector('.text-header-sm [target="_self"]');
+                    const companyEl = el.querySelector('[data-testid="job-card-company"]');
+                    const locationEl = el.querySelector('[data-testid="job-card-location"]');
+                    const logoEl = el.querySelector('[srcset]');
                     return {
                         title: titleEl?.textContent?.trim() || '',
                         company: companyEl?.textContent?.trim() || '',
                         location: locationEl?.textContent?.trim() || '',
                         link: titleEl?.getAttribute('href') || '',
-                        date: dateEl?.textContent?.trim(),
-                        description: descEl?.textContent?.trim(),
-                        salary: salaryEl?.textContent?.trim(),
+                        logo: logoEl?.getAttribute('src') || '',
                         source: 'ZipRecruiter'
                     };
                 });
@@ -90,7 +84,7 @@ const scrapeZipRecruiter = async (query, location = '', options = {}) => {
             jobs.push(...pageJobs);
             console.log(`Found ${pageJobs.length} jobs on page ${currentPage}`);
             currentPage++;
-            await (0, promises_1.setTimeout)(3000 + Math.random() * 4000); // Random delay 3-7s
+            await (0, promises_1.setTimeout)(3000 + Math.random() * 4000);
         }
         return jobs;
     }
