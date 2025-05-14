@@ -7,8 +7,7 @@
     "build": "rimraf dist && tsc",
     "preserve": "npm run build",
     "serve": "cross-env NODE_ENV=development concurrently \"tsc --watch\" \"nodemon -q dist/index.js\"",
-    "start": "cross-env NODE_ENV=production node dist/index.js",
-    "postinstall": "node node_modules/puppeteer/install.js"
+    "start": "cross-env NODE_ENV=production node dist/index.js"
   },
   "keywords": [],
   "author": "",
