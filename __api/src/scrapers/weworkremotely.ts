@@ -23,7 +23,7 @@ interface WWRJob {
 export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
   puppeteer.use(StealthPlugin());
   const browser = await puppeteer.launch({
-    executablePath: path.join('local-chromium', 'chrome-linux', 'chrome'),
+    executablePath: path.join(__dirname, 'local-chromium/chrome-linux/chrome'),
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
