@@ -35,11 +35,3 @@ const start_server = async () => {
 }
 
 start_server()
-
-const chromiumPath = path.join(__dirname, 'local-chromium', 'chrome-linux', 'chrome');
-
-if (!fs.existsSync(chromiumPath)) {
-  throw new Error(`Chromium não encontrado em: ${chromiumPath}`);
-} else {
-  console.log('Chromium encontrado com sucesso!');
-}
