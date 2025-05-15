@@ -6,6 +6,8 @@ import helmet from 'helmet'
 import { config } from 'dotenv'
 
 import jobRoutes from './routes/jobRoutes'
+import path from 'path'
+import fs from 'fs'
 // import { connectDB } from './db';
 
 // connectDB();
@@ -33,3 +35,11 @@ const start_server = async () => {
 }
 
 start_server()
+
+const chromiumPath = path.join(__dirname, 'local-chromium', 'chrome-linux', 'chrome');
+
+if (!fs.existsSync(chromiumPath)) {
+  throw new Error(`Chromium não encontrado em: ${chromiumPath}`);
+} else {
+  console.log('Chromium encontrado com sucesso!');
+}
