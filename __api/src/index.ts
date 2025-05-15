@@ -22,6 +22,9 @@ app.use(morgan('dev'))
 app.use(express.json())
 
 app.use('/api/jobs', jobRoutes)
+app.get('/health', (req, res) => {
+    res.send('OK')
+})
 
 const start_server = async () => {
     try {
