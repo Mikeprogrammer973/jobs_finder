@@ -1,5 +1,6 @@
-import puppeteer from 'puppeteer-extra';
-import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+// import puppeteer from 'puppeteer-extra';
+// import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import { chromium } from 'playwright'
 
 interface WWRJob {
   title: string;
@@ -20,21 +21,20 @@ interface WWRJob {
 }
 
 export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
-  puppeteer.use(StealthPlugin());
-  const browser = await puppeteer.launch({
+  // puppeteer.use(StealthPlugin());
+  const browser = await chromium.launch({
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox'],
-    executablePath: process.env.CHROMIUM_PATH || '/usr/bin/chromium-browser'
   });
 
   try {
     const page = await browser.newPage();
     
-    await page.setUserAgent('Mozilla/5.0');
-    await page.setViewport({ width: 1366, height: 768 });
+    // await page.setUserAgent('Mozilla/5.0');
+    // await page.setViewport({ width: 1366, height: 768 });
 
     await page.goto(`https://weworkremotely.com/remote-jobs/search?term=${encodeURIComponent(query)}`, {
-      waitUntil: 'networkidle2',
+      // waitUntil: 'networkidle2',
       timeout: 60000
     });
 

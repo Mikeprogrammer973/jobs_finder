@@ -29,7 +29,7 @@ app.get('/health', (req, res) => {
 const start_server = async () => {
     try {
         // await mongoose.connect(process.env.MONGODB_URI || '')
-        app.listen(process.env.PORT, () => {
+        app.listen(process.env.PORT || 4000, () => {
             console.log(`Servidor rodando na porta ${process.env.PORT}`)
         })
     } catch (error) {

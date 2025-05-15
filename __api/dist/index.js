@@ -18,10 +18,13 @@ app.use((0, helmet_1.default)());
 app.use((0, morgan_1.default)('dev'));
 app.use(express_1.default.json());
 app.use('/api/jobs', jobRoutes_1.default);
+app.get('/health', (req, res) => {
+    res.send('OK');
+});
 const start_server = async () => {
     try {
         // await mongoose.connect(process.env.MONGODB_URI || '')
-        app.listen(process.env.PORT, () => {
+        app.listen(process.env.PORT || 4000, () => {
             console.log(`Servidor rodando na porta ${process.env.PORT}`);
         });
     }

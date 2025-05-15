@@ -1,24 +1,21 @@
 "use strict";
-var __importDefault = (this && this.__importDefault) || function (mod) {
-    return (mod && mod.__esModule) ? mod : { "default": mod };
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeWWR = void 0;
-const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
-const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
+// import puppeteer from 'puppeteer-extra';
+// import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+const playwright_1 = require("playwright");
 const scrapeWWR = async (query) => {
-    puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
-    const browser = await puppeteer_extra_1.default.launch({
-        // executablePath: '/usr/bin/chromium-browser',
+    // puppeteer.use(StealthPlugin());
+    const browser = await playwright_1.chromium.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
     });
     try {
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0');
-        await page.setViewport({ width: 1366, height: 768 });
+        // await page.setUserAgent('Mozilla/5.0');
+        // await page.setViewport({ width: 1366, height: 768 });
         await page.goto(`https://weworkremotely.com/remote-jobs/search?term=${encodeURIComponent(query)}`, {
-            waitUntil: 'networkidle2',
+            // waitUntil: 'networkidle2',
             timeout: 60000
         });
         const isBlocked = await page.evaluate(() => {
