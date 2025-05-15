@@ -7,6 +7,7 @@ const playwright_1 = require("playwright");
 const scrapeWWR = async (query) => {
     // puppeteer.use(StealthPlugin());
     const browser = await playwright_1.chromium.launch({
+        executablePath: '/usr/bin/chromium-browser',
         headless: true,
         args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
     });
