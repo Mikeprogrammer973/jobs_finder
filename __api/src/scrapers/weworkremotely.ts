@@ -24,7 +24,7 @@ export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
   // puppeteer.use(StealthPlugin());
   const browser = await chromium.launch({
     headless: true,
-    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
   });
 
   try {

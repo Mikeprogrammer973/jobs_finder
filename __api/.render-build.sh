@@ -1,11 +1,9 @@
 #!/bin/bash
-# Versão corrigida para Render.com
+# Script otimizado para Render sem root
 
-# 1. Instala o Playwright e configura o browser
+# 1. Instala as dependências do Node
 npm install
-npx playwright install-deps chromium  # Instala dependências do sistema SEM sudo
-npx playwright install chromium      # Instala o Chromium no cache do usuário
 
-# 2. Define permissões para o cache do Playwright
-mkdir -p ~/.cache/ms-playwright
-chmod -R 755 ~/.cache
+# 2. Configura o Playwright para usar cache sem privilégios
+export PLAYWRIGHT_BROWSERS_PATH=$HOME/.cache/ms-playwright
+npx playwright install --with-deps chromium

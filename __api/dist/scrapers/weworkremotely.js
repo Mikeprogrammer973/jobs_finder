@@ -8,7 +8,7 @@ const scrapeWWR = async (query) => {
     // puppeteer.use(StealthPlugin());
     const browser = await playwright_1.chromium.launch({
         headless: true,
-        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
+        args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage', '--single-process'],
     });
     try {
         const page = await browser.newPage();
