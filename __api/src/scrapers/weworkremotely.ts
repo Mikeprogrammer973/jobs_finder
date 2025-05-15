@@ -1,6 +1,6 @@
-import puppeteer from 'puppeteer-core';
-import puppeteerExtra from 'puppeteer-extra';
+import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import path from 'path'
 
 interface WWRJob {
   title: string;
@@ -21,9 +21,9 @@ interface WWRJob {
 }
 
 export const scrapeWWR = async (query: string): Promise<WWRJob[]> => {
-  // puppeteerExtra.use(StealthPlugin());
+  puppeteer.use(StealthPlugin());
   const browser = await puppeteer.launch({
-    executablePath: '/usr/bin/chromium-browser',
+    executablePath: path.join(__dirname, 'local-chromium', 'chrome-linux', 'chrome'),
     headless: true,
     args: ['--no-sandbox', '--disable-setuid-sandbox']
   });
