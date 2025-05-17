@@ -46,7 +46,7 @@ export const scrapeWWR = async (query: string) => {
 
     await page.goto(`https://weworkremotely.com/remote-jobs/search?term=${encodeURIComponent(query)}`, {
       waitUntil: 'networkidle2',
-      timeout: 60000
+      timeout: 60000 * 3
     });
 
     const isBlocked = await page.evaluate(() => {

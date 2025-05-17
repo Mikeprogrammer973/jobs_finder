@@ -19,7 +19,7 @@ const scrapeWWR = async (query) => {
         await page.setViewport({ width: 1366, height: 768 });
         await page.goto(`https://weworkremotely.com/remote-jobs/search?term=${encodeURIComponent(query)}`, {
             waitUntil: 'networkidle2',
-            timeout: 60000
+            timeout: 60000 * 3
         });
         const isBlocked = await page.evaluate(() => {
             return document.title.includes('Access Denied') ||
