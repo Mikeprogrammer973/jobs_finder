@@ -56,7 +56,7 @@ const scrapeZipRecruiter = async (query, location = '', options = {}) => {
                 throw new Error('ZipRecruiter has blocked the request');
             }
             try {
-                await page.waitForSelector('.job_result_two_pane', { timeout: 30000 });
+                await page.waitForSelector('.job_result_two_pane', { timeout: 30000 * 7 });
             }
             catch (err) {
                 console.log('No job cards found, ending pagination');
