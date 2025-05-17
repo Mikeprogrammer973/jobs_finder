@@ -57,7 +57,7 @@ export const scrapeLinkedIn = async (
     }
 
     // Espera pelos resultados
-    await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 });
+    await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 * 7 });
 
 
     // Função para fazer scroll e carregar mais resultados

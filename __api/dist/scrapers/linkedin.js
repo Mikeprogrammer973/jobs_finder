@@ -37,7 +37,7 @@ const scrapeLinkedIn = async (query, headless = true) => {
             throw new Error('LinkedIn requer login para visualizar vagas');
         }
         // Espera pelos resultados
-        await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 });
+        await pageObj.waitForSelector('.jobs-search__results-list', { timeout: 15000 * 7 });
         // Função para fazer scroll e carregar mais resultados
         const autoScroll = async (maxScrolls = 100) => {
             let previousHeight = 0;

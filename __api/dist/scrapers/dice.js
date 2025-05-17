@@ -35,7 +35,7 @@ const scrapeDice = async (query, options = {}) => {
             console.log(`Navigating to: ${url}`);
             await page.goto(url, {
                 waitUntil: 'domcontentloaded',
-                timeout: timeout
+                timeout: timeout * 3
             });
             const jobs = await page.evaluate(() => {
                 const jobCards = Array.from(document.querySelectorAll('[data-job-guid]') || []);

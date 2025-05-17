@@ -68,7 +68,7 @@ export const scrapeDice = async (
             console.log(`Navigating to: ${url}`);
             await page.goto(url, {
                 waitUntil: 'domcontentloaded',
-                timeout: timeout
+                timeout: timeout * 3
             });
 
             const jobs = await page.evaluate(() => {
