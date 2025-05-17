@@ -1,9 +1,18 @@
 "use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.scrapeWWR = void 0;
-const crawlee_1 = require("crawlee");
+const puppeteer_extra_1 = __importDefault(require("puppeteer-extra"));
+const puppeteer_extra_plugin_stealth_1 = __importDefault(require("puppeteer-extra-plugin-stealth"));
 const scrapeWWR = async (query) => {
-    const browser = await (0, crawlee_1.launchPuppeteer)();
+    puppeteer_extra_1.default.use((0, puppeteer_extra_plugin_stealth_1.default)());
+    const browser = await puppeteer_extra_1.default.launch({
+        headless: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
+    });
     try {
         const page = await browser.newPage();
         await page.setUserAgent('Mozilla/5.0');
