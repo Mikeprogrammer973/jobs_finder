@@ -30,7 +30,7 @@ const scrapeLinkedIn = async (query, headless = true) => {
         console.log(`Acessando: ${url}`);
         await pageObj.goto(url, {
             waitUntil: 'networkidle2',
-            timeout: 60000 * 3
+            timeout: 60000 * 7
         });
         // Verificação de login
         if (await pageObj.$('.authwall') !== null) {

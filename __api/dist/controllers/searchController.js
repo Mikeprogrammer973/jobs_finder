@@ -25,13 +25,13 @@ const searchJobs = async (req, res) => {
     };
     const scrapers = [
         { name: 'RemoteOK', fn: () => (0, remoteok_1.scrapeRemoteOK)(query.toString()) },
+        { name: 'Dice', fn: () => (0, dice_1.scrapeDice)(query.toString()) },
         { name: 'Remotive', fn: () => (0, remotive_1.scrapeRemotive)(query.toString()) },
         { name: 'WeWorkRemotely', fn: () => (0, weworkremotely_1.scrapeWWR)(query.toString()) },
-        { name: 'Glassdoor', fn: () => (0, glassdoor_1.scrapeGlassdoor)(query.toString(), location.toString(), Number(page.toLocaleString())) },
-        { name: 'LinkedIn', fn: () => (0, linkedin_1.scrapeLinkedIn)(query.toString()) },
-        { name: 'Dice', fn: () => (0, dice_1.scrapeDice)(query.toString()) },
         { name: 'ZipRecruiter', fn: () => (0, zipRecruiter_1.scrapeZipRecruiter)(query.toString()), location },
         { name: 'SimplyHired', fn: () => (0, simplyhired_1.scrapeSimplyHired)(query.toString(), location.toString()) },
+        { name: 'Glassdoor', fn: () => (0, glassdoor_1.scrapeGlassdoor)(query.toString(), location.toString(), Number(page.toLocaleString())) },
+        { name: 'LinkedIn', fn: () => (0, linkedin_1.scrapeLinkedIn)(query.toString()) },
     ];
     const allResults = [];
     for (const { name, fn } of scrapers) {

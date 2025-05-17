@@ -48,7 +48,7 @@ export const scrapeLinkedIn = async (
     console.log(`Acessando: ${url}`);
     await pageObj.goto(url, {
       waitUntil: 'networkidle2',
-      timeout: 60000 * 3
+      timeout: 60000 * 7
     });
 
     // Verificação de login
