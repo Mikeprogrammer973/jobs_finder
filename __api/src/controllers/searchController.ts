@@ -35,8 +35,8 @@ export const searchJobs = async (req: Request, res: Response) => {
 
   const scrapers = [
     { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
-    { name: 'Dice', fn: () => scrapeDice(query.toString())},
     { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
+    { name: 'Dice', fn: () => scrapeDice(query.toString())},
     { name: 'WeWorkRemotely', fn: () => scrapeWWR(query.toString()) },
     { name: 'ZipRecruiter', fn: () => scrapeZipRecruiter(query.toString()), location },
     { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())},
