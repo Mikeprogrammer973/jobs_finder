@@ -10,7 +10,8 @@ const scrapeDice = async (query, options = {}) => {
      } = options;
     const browser = await puppeteer_1.default.launch({
         headless: headless,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
     });
     try {
         const page = await browser.newPage();
@@ -20,7 +21,7 @@ const scrapeDice = async (query, options = {}) => {
         console.log(`Navigating to: ${url}`);
         await page.goto(url, {
             waitUntil: 'domcontentloaded',
-            timeout: timeout
+            timeout: timeout * 3
         });
         const max_pages = await page.evaluate(() => {
             const max_pages = document.querySelector('[role="navigation"]')?.children[2].children[2].textContent?.trim();

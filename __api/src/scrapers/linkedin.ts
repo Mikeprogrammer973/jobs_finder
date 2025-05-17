@@ -31,7 +31,8 @@ export const scrapeLinkedIn = async (
       '--disable-setuid-sandbox',
       '--window-size=1920,1080',
       `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`
-    ]
+    ],
+    executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
   });
 
   const pageObj = await browser.newPage();
@@ -47,7 +48,7 @@ export const scrapeLinkedIn = async (
     console.log(`Acessando: ${url}`);
     await pageObj.goto(url, {
       waitUntil: 'networkidle2',
-      timeout: 60000
+      timeout: 60000 * 3
     });
 
     // Verificação de login

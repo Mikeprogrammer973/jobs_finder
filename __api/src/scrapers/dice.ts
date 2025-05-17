@@ -34,7 +34,8 @@ export const scrapeDice = async (
 
     const browser = await puppeteer.launch({
         headless: headless,
-        args: ['--no-sandbox', '--disable-setuid-sandbox']
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+        executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
     });
 
     try {
@@ -47,7 +48,7 @@ export const scrapeDice = async (
         console.log(`Navigating to: ${url}`);
         await page.goto(url, {
             waitUntil: 'domcontentloaded',
-            timeout: timeout
+            timeout: timeout * 3
         });
 
         const max_pages = await page.evaluate(() => {

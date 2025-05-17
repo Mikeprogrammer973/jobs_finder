@@ -1,7 +1,14 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.searchJobs = void 0;
+const linkedin_1 = require("../scrapers/linkedin");
+const remoteok_1 = require("../scrapers/remoteok");
+const remotive_1 = require("../scrapers/remotive");
 const weworkremotely_1 = require("../scrapers/weworkremotely");
+const glassdoor_1 = require("../scrapers/glassdoor");
+const simplyhired_1 = require("../scrapers/simplyhired");
+const dice_1 = require("../scrapers/dice");
+const zipRecruiter_1 = require("../scrapers/zipRecruiter");
 const searchJobs = async (req, res) => {
     const { query = '', location = '', page = 1, remote, type, source } = req.query;
     const key = `jobs:${query}:${location}:${page}:${remote}:${type}:${source}`;
@@ -17,14 +24,14 @@ const searchJobs = async (req, res) => {
         res.flushHeaders();
     };
     const scrapers = [
-        // { name: 'RemoteOK', fn: () => scrapeRemoteOK(query.toString()) },
-        // { name: 'Remotive', fn: () => scrapeRemotive(query.toString()) },
+        { name: 'RemoteOK', fn: () => (0, remoteok_1.scrapeRemoteOK)(query.toString()) },
+        { name: 'Remotive', fn: () => (0, remotive_1.scrapeRemotive)(query.toString()) },
         { name: 'WeWorkRemotely', fn: () => (0, weworkremotely_1.scrapeWWR)(query.toString()) },
-        // { name: 'Glassdoor', fn: () => scrapeGlassdoor(query.toString(), location.toString(), Number(page.toLocaleString()) )},
-        // { name: 'LinkedIn', fn: () => scrapeLinkedIn(query.toString()) },
-        // { name: 'Dice', fn: () => scrapeDice(query.toString())},
-        // { name: 'ZipRecruiter', fn: () => scrapeZipRecruiter(query.toString()), location },
-        // { name: 'SimplyHired', fn: () => scrapeSimplyHired(query.toString(), location.toString())}, 
+        { name: 'Glassdoor', fn: () => (0, glassdoor_1.scrapeGlassdoor)(query.toString(), location.toString(), Number(page.toLocaleString())) },
+        { name: 'LinkedIn', fn: () => (0, linkedin_1.scrapeLinkedIn)(query.toString()) },
+        { name: 'Dice', fn: () => (0, dice_1.scrapeDice)(query.toString()) },
+        { name: 'ZipRecruiter', fn: () => (0, zipRecruiter_1.scrapeZipRecruiter)(query.toString()), location },
+        { name: 'SimplyHired', fn: () => (0, simplyhired_1.scrapeSimplyHired)(query.toString(), location.toString()) },
     ];
     const allResults = [];
     for (const { name, fn } of scrapers) {

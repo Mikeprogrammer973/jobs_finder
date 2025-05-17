@@ -40,7 +40,8 @@ export const scrapeZipRecruiter = async (
       '--window-size=1280,720',
       '--disable-dev-shm-usage',
       `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36`
-    ]
+    ],
+    executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
   });
 
   const page = await browser.newPage();
@@ -70,7 +71,7 @@ export const scrapeZipRecruiter = async (
 
       await page.goto(url, {
         waitUntil: 'networkidle2',
-        timeout: 60000
+        timeout: 60000 * 3
       });
 
       // Check for blocking

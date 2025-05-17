@@ -18,7 +18,8 @@ const scrapeSimplyHired = async (query, location = '', __max_pages = 5, headless
             '--window-size=1920,1080',
             '--disable-dev-shm-usage',
             `--user-agent=Mozilla/5.0`
-        ]
+        ],
+        executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
     });
     const pageObj = await browser.newPage();
     try {
@@ -38,7 +39,7 @@ const scrapeSimplyHired = async (query, location = '', __max_pages = 5, headless
         const url = `https://www.simplyhired.com/search?q=${encodeURIComponent(query)}&l=${encodeURIComponent(location)}`;
         await pageObj.goto(url, {
             waitUntil: 'networkidle2',
-            timeout: 60000
+            timeout: 60000 * 3
         });
         // Check for blocking
         const isBlocked = await pageObj.evaluate(() => {

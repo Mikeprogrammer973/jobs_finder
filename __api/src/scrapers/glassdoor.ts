@@ -46,7 +46,8 @@ export const scrapeGlassdoor = async (
       '--disable-dev-shm-usage',
       '--disable-blink-features=AutomationControlled',
       `--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36`
-    ]
+    ],
+    executablePath: './chrome/linux-136.0.7103.94/chrome-linux64/chrome'
   });
 
   const pageObj = await browser.newPage();
@@ -73,7 +74,7 @@ export const scrapeGlassdoor = async (
     // Navegação com timeout aumentado
     await pageObj.goto(url, {
       waitUntil: 'networkidle2',
-      timeout: 90000
+      timeout: 90000 * 3
     });
 
     // Verificação de bloqueios
